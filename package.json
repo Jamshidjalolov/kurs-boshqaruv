@@ -1,0 +1,21 @@
+{
+  "name": "kurs-boshqaruv-tizimi",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev --workspace @kurs/api\" \"npm run dev --workspace @kurs/web\"",
+    "dev:full-fastapi": "concurrently -k \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:api": "npm run dev --workspace @kurs/api",
+    "dev:backend": "uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:web": "npm run dev --workspace @kurs/web",
+    "build": "npm run build --workspace @kurs/api && npm run build --workspace @kurs/web",
+    "db:seed": "npm run prisma:seed --workspace @kurs/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

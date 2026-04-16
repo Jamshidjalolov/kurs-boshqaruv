@@ -1,0 +1,355 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+  SUSPENDED
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  FROZEN
+  GRADUATED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+}
+
+enum GroupStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum CourseStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+  NOT_PREPARED
+  HOMEWORK_NOT_DONE
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  PARTIAL
+  OVERDUE
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  ONLINE
+}
+
+enum NotificationChannel {
+  TELEGRAM
+  SMS
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum NoteTag {
+  NOT_PREPARED
+  NO_MATERIALS
+  HOMEWORK_NOT_DONE
+  LOW_DISCIPLINE
+  GOOD_ACTIVITY
+  EXCELLENT_PARTICIPATION
+  PARENT_CALL_REQUIRED
+}
+
+model User {
+  id               String      @id @default(uuid())
+  fullName         String
+  email            String?     @unique
+  phone            String      @unique
+  passwordHash     String
+  role             UserRole
+  status           UserStatus  @default(PENDING)
+  avatar           String?
+  refreshTokenHash String?
+  lastLoginAt      DateTime?
+  student          Student?
+  teacher          Teacher?
+  parent           Parent?
+  sentNotifications Notification[] @relation("NotificationSender")
+  auditLogs        AuditLog[]
+  passwordResets   PasswordResetToken[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+}
+
+model Parent {
+  id             String   @id @default(uuid())
+  userId         String?  @unique
+  fullName       String
+  phone          String   @unique
+  email          String?  @unique
+  relation       String?
+  telegramChatId String?
+  address        String?
+  user           User?    @relation(fields: [userId], references: [id])
+  students       Student[]
+  notifications  Notification[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+}
+
+model Student {
+  id                   String        @id @default(uuid())
+  userId               String?       @unique
+  parentId             String?
+  courseId             String?
+  fullName             String
+  phone                String        @unique
+  parentName           String?
+  parentPhone          String?
+  parentTelegramChatId String?
+  gender               String?
+  birthDate            DateTime?
+  address              String?
+  avatar               String?
+  status               StudentStatus @default(ACTIVE)
+  joinedAt             DateTime      @default(now())
+  paymentPlan          String?
+  monthlyFee           Decimal?      @db.Decimal(10, 2)
+  note                 String?
+  progressPercent      Int           @default(0)
+  user                 User?         @relation(fields: [userId], references: [id])
+  parent               Parent?       @relation(fields: [parentId], references: [id])
+  course               Course?       @relation(fields: [courseId], references: [id])
+  memberships          StudentGroup[]
+  attendances          Attendance[]
+  payments             Payment[]
+  notes                TeacherNote[]
+  notifications        Notification[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  deletedAt            DateTime?
+}
+
+model Teacher {
+  id            String        @id @default(uuid())
+  userId        String?       @unique
+  fullName      String
+  phone         String        @unique
+  email         String?       @unique
+  specialization String?
+  avatar        String?
+  salaryType    String?
+  salaryAmount  Decimal?      @db.Decimal(10, 2)
+  status        TeacherStatus @default(ACTIVE)
+  user          User?         @relation(fields: [userId], references: [id])
+  groups        Group[]
+  notes         TeacherNote[]
+  attendancesMarked Attendance[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  duration    Int
+  price       Decimal      @db.Decimal(10, 2)
+  level       String?
+  status      CourseStatus @default(ACTIVE)
+  students    Student[]
+  groups      Group[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+}
+
+model Group {
+  id           String        @id @default(uuid())
+  courseId     String
+  teacherId    String?
+  name         String
+  room         String?
+  capacity     Int           @default(16)
+  scheduleDays String[]
+  scheduleTime String
+  startDate    DateTime
+  endDate      DateTime?
+  status       GroupStatus   @default(ACTIVE)
+  course       Course        @relation(fields: [courseId], references: [id])
+  teacher      Teacher?      @relation(fields: [teacherId], references: [id])
+  memberships  StudentGroup[]
+  attendances  Attendance[]
+  schedules    Schedule[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+}
+
+model StudentGroup {
+  studentId  String
+  groupId    String
+  joinedAt   DateTime @default(now())
+  isActive   Boolean  @default(true)
+  student    Student  @relation(fields: [studentId], references: [id])
+  group      Group    @relation(fields: [groupId], references: [id])
+
+  @@id([studentId, groupId])
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  groupId   String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  room      String?
+  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Attendance {
+  id         String           @id @default(uuid())
+  studentId  String
+  groupId    String
+  teacherId  String
+  sessionDate DateTime
+  status     AttendanceStatus
+  comment    String?
+  student    Student          @relation(fields: [studentId], references: [id])
+  group      Group            @relation(fields: [groupId], references: [id])
+  teacher    Teacher          @relation(fields: [teacherId], references: [id])
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([studentId, groupId, sessionDate])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  studentId     String
+  amount        Decimal       @db.Decimal(10, 2)
+  dueDate       DateTime
+  paidDate      DateTime?
+  month         Int
+  year          Int
+  paymentMethod PaymentMethod?
+  status        PaymentStatus @default(UNPAID)
+  note          String?
+  receiptNumber String?
+  receiptUrl    String?
+  student       Student       @relation(fields: [studentId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model TeacherNote {
+  id                    String   @id @default(uuid())
+  studentId             String
+  teacherId             String
+  tag                   NoteTag
+  comment               String?
+  noteDate              DateTime @default(now())
+  notificationTriggered Boolean  @default(false)
+  student               Student  @relation(fields: [studentId], references: [id])
+  teacher               Teacher  @relation(fields: [teacherId], references: [id])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model NotificationTemplate {
+  id        String              @id @default(uuid())
+  key       String              @unique
+  name      String
+  content   String
+  channel   NotificationChannel @default(TELEGRAM)
+  isActive  Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  messages  Notification[]
+}
+
+model Notification {
+  id           String              @id @default(uuid())
+  studentId    String?
+  parentId     String?
+  senderId     String?
+  templateId   String?
+  channel      NotificationChannel @default(TELEGRAM)
+  status       NotificationStatus  @default(PENDING)
+  recipient    String
+  message      String
+  errorMessage String?
+  context      Json?
+  sentAt       DateTime?
+  student      Student?            @relation(fields: [studentId], references: [id])
+  parent       Parent?             @relation(fields: [parentId], references: [id])
+  sender       User?               @relation("NotificationSender", fields: [senderId], references: [id])
+  template     NotificationTemplate? @relation(fields: [templateId], references: [id])
+  createdAt    DateTime            @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  meta       Json?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id         String   @id @default(uuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model SystemSetting {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  value      Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
