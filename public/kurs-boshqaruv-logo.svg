@@ -1,0 +1,154 @@
+<svg width="720" height="760" viewBox="0 0 720 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="84" y1="40" x2="626" y2="726" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1226"/>
+      <stop offset="0.55" stop-color="#081833"/>
+      <stop offset="1" stop-color="#040B18"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="122" y1="86" x2="576" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0A9"/>
+      <stop offset="0.28" stop-color="#F6C65B"/>
+      <stop offset="0.65" stop-color="#B87A14"/>
+      <stop offset="1" stop-color="#FFDA73"/>
+    </linearGradient>
+    <linearGradient id="goldSoft" x1="177" y1="164" x2="540" y2="676" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFDE7A"/>
+      <stop offset="1" stop-color="#A6650F"/>
+    </linearGradient>
+    <linearGradient id="blueGlow" x1="160" y1="96" x2="574" y2="555" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1AB2FF"/>
+      <stop offset="0.55" stop-color="#1254E8"/>
+      <stop offset="1" stop-color="#0A1E66"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="121" y1="420" x2="602" y2="523" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B2878"/>
+      <stop offset="0.52" stop-color="#113A9B"/>
+      <stop offset="1" stop-color="#081C59"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="175" y1="497" x2="545" y2="671" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#051636"/>
+      <stop offset="1" stop-color="#08111F"/>
+    </linearGradient>
+    <filter id="shadow" x="36" y="16" width="648" height="728" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="10"/>
+      <feGaussianBlur stdDeviation="18"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.008 0 0 0 0 0.024 0 0 0 0 0.075 0 0 0 0.38 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <path d="M360 38L603 144V394C603 520 518 639 393 700L360 716L327 700C202 639 117 520 117 394V144L360 38Z" fill="url(#bg)"/>
+    <path d="M360 66L579 160V388C579 504 502 610 390 665L360 679L330 665C218 610 141 504 141 388V160L360 66Z" stroke="url(#gold)" stroke-width="18"/>
+    <path d="M360 93L556 177V385C556 489 486 585 385 632L360 644L335 632C234 585 164 489 164 385V177L360 93Z" fill="url(#panel)" stroke="url(#blueGlow)" stroke-width="6"/>
+
+    <path d="M130 244L87 328L95 428" stroke="#0E6BFF" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+    <path d="M590 244L633 328L625 428" stroke="#0E6BFF" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+
+    <g opacity="0.98">
+      <path d="M177 287C151 259 137 224 137 186" stroke="url(#goldSoft)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M161 246C145 238 140 220 148 206C163 210 173 223 171 239L161 246Z" fill="url(#gold)"/>
+      <path d="M149 285C133 278 127 260 133 245C149 249 160 261 159 279L149 285Z" fill="url(#gold)"/>
+      <path d="M153 326C137 319 130 300 136 284C152 287 164 300 163 318L153 326Z" fill="url(#gold)"/>
+      <path d="M173 365C156 359 147 340 151 323C168 326 181 339 182 357L173 365Z" fill="url(#gold)"/>
+      <path d="M199 401C182 396 171 378 174 360C192 362 206 375 208 393L199 401Z" fill="url(#gold)"/>
+      <path d="M543 287C569 259 583 224 583 186" stroke="url(#goldSoft)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M559 246C575 238 580 220 572 206C557 210 547 223 549 239L559 246Z" fill="url(#gold)"/>
+      <path d="M571 285C587 278 593 260 587 245C571 249 560 261 561 279L571 285Z" fill="url(#gold)"/>
+      <path d="M567 326C583 319 590 300 584 284C568 287 556 300 557 318L567 326Z" fill="url(#gold)"/>
+      <path d="M547 365C564 359 573 340 569 323C552 326 539 339 538 357L547 365Z" fill="url(#gold)"/>
+      <path d="M521 401C538 396 549 378 546 360C528 362 514 375 512 393L521 401Z" fill="url(#gold)"/>
+    </g>
+
+    <circle cx="360" cy="220" r="94" fill="url(#blueGlow)" stroke="url(#gold)" stroke-width="6"/>
+    <path d="M266 220H454" stroke="url(#gold)" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M360 127V313" stroke="url(#gold)" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M289 151C339 177 382 177 431 151" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M286 290C336 263 384 263 434 290" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M316 129C304 168 300 218 316 311" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M404 129C416 168 420 218 404 311" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="round"/>
+
+    <path d="M271 146L359 108L451 146L359 174L271 146Z" fill="#071127" stroke="url(#gold)" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M302 153V189L359 220L418 188V153L359 170L302 153Z" fill="#020A18" stroke="#0A2B7C" stroke-width="5"/>
+    <path d="M288 149V212" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M288 212L276 235C274 239 277 243 281 243H295C299 243 302 239 300 235L288 212Z" fill="url(#gold)"/>
+
+    <g opacity="0.94">
+      <rect x="143" y="220" width="95" height="42" rx="8" fill="#08152D" stroke="url(#gold)" stroke-width="4"/>
+      <rect x="136" y="254" width="102" height="45" rx="8" fill="#08152D" stroke="url(#gold)" stroke-width="4"/>
+      <rect x="129" y="292" width="108" height="47" rx="8" fill="#08152D" stroke="url(#gold)" stroke-width="4"/>
+      <text x="190" y="248" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle">STRATEGIYA</text>
+      <text x="187" y="283" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle">BOSHQARUV</text>
+      <text x="183" y="322" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle">RIVOJLANISH</text>
+    </g>
+
+    <rect x="479" y="226" width="103" height="115" rx="10" fill="#09101E" stroke="url(#gold)" stroke-width="4"/>
+    <path d="M494 258H565" stroke="#0E6BFF" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="515" cy="281" r="18" fill="#1A2855" stroke="url(#gold)" stroke-width="3"/>
+    <path d="M510 280L514 286L522 275" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M493 319C507 309 521 305 534 307C550 309 560 320 568 332" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M545 303L568 298L563 321" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M231 271C278 247 322 235 360 235C398 235 442 247 489 271L474 349C432 329 394 321 360 321C326 321 288 329 246 349L231 271Z" fill="#FFF6E7" stroke="url(#gold)" stroke-width="5"/>
+    <path d="M360 235V321" stroke="#E2BF70" stroke-width="3"/>
+    <path d="M253 286C292 285 324 291 351 299" stroke="#D6B06B" stroke-width="3" stroke-linecap="round"/>
+    <path d="M253 301C295 300 325 306 350 314" stroke="#D6B06B" stroke-width="3" stroke-linecap="round"/>
+    <path d="M369 299C396 291 428 285 467 286" stroke="#D6B06B" stroke-width="3" stroke-linecap="round"/>
+    <path d="M370 314C395 306 425 300 467 301" stroke="#D6B06B" stroke-width="3" stroke-linecap="round"/>
+    <path d="M251 332C288 326 324 332 360 346C396 332 432 326 469 332" stroke="#0E6BFF" stroke-width="4" stroke-linecap="round"/>
+
+    <text x="360" y="462" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="120" font-weight="900" text-anchor="middle" letter-spacing="2">KURS</text>
+
+    <path d="M135 444H585L560 532H160L135 444Z" fill="url(#ribbon)" stroke="url(#gold)" stroke-width="7"/>
+    <path d="M160 444L93 481L150 517L160 444Z" fill="#092265" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M560 444L627 481L570 517L560 444Z" fill="#092265" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round"/>
+    <text x="360" y="507" fill="#F3F1E8" font-family="Arial, Helvetica, sans-serif" font-size="73" font-weight="900" text-anchor="middle">BOSHQARUV</text>
+
+    <path d="M200 535H520L514 654H206L200 535Z" fill="url(#panel)" stroke="url(#gold)" stroke-width="5"/>
+    <path d="M264 548V628" stroke="url(#gold)" stroke-width="2" opacity="0.65"/>
+    <path d="M360 548V628" stroke="url(#gold)" stroke-width="2" opacity="0.65"/>
+    <path d="M456 548V628" stroke="url(#gold)" stroke-width="2" opacity="0.65"/>
+
+    <g fill="url(#gold)">
+      <circle cx="231" cy="579" r="8"/>
+      <circle cx="247" cy="579" r="8"/>
+      <circle cx="239" cy="595" r="8"/>
+      <rect x="221" y="603" width="36" height="8" rx="4"/>
+
+      <path d="M323 565H350C353 565 355 567 355 570V604C355 607 353 609 350 609H323C320 609 318 607 318 604V570C318 567 320 565 323 565Z"/>
+      <path d="M332 556H341C344 556 346 558 346 561V568H327V561C327 558 329 556 332 556Z"/>
+      <path d="M326 580L332 586L345 573" stroke="#08111F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M326 592L332 598L345 585" stroke="#08111F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <circle cx="408" cy="586" r="21"/>
+      <circle cx="408" cy="586" r="10" fill="#08111F"/>
+      <path d="M408 558V567" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M408 605V614" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M380 586H389" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M427 586H436" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M388 566L394 572" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M422 600L428 606" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M428 566L422 572" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M394 600L388 606" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+
+      <path d="M484 609H535V617H484V609Z"/>
+      <path d="M490 592H501V609H490V592Z"/>
+      <path d="M507 579H518V609H507V579Z"/>
+      <path d="M524 566H535V609H524V566Z"/>
+      <path d="M487 574L501 565L514 570L533 553" stroke="url(#gold)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M529 553H540V564" stroke="url(#gold)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <text x="239" y="642" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" text-anchor="middle">REJA</text>
+    <text x="336" y="642" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" text-anchor="middle">TASHKIL</text>
+    <text x="408" y="642" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" text-anchor="middle">NAZORAT</text>
+    <text x="510" y="642" fill="url(#gold)" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" text-anchor="middle">TAHLIL</text>
+
+    <path d="M320 685L331 707L355 711L337 727L341 751L320 739L299 751L303 727L285 711L309 707L320 685Z" fill="url(#gold)"/>
+    <path d="M360 674L372 698L398 702L379 720L383 746L360 734L337 746L341 720L322 702L348 698L360 674Z" fill="url(#gold)"/>
+    <path d="M400 685L411 707L435 711L417 727L421 751L400 739L379 751L383 727L365 711L389 707L400 685Z" fill="url(#gold)"/>
+  </g>
+</svg>
