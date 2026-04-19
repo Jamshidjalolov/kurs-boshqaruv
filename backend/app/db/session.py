@@ -15,6 +15,13 @@ def _as_psycopg_dsn(database_url: str) -> str:
     return database_url.replace("postgresql+psycopg://", "postgresql://", 1)
 
 
+def _database_connection_error() -> RuntimeError:
+    return RuntimeError(
+        "Databasega ulanib bo'lmadi. Render DATABASE_URL qiymatini to'liq Neon connection string "
+        "sifatida kiriting: postgresql+psycopg://USER:PASSWORD@HOST/DB?sslmode=require"
+    )
+
+
 def ensure_database_exists(database_url: str) -> None:
     url = make_url(database_url)
 
@@ -31,6 +38,8 @@ def ensure_database_exists(database_url: str) -> None:
             return
     except psycopg.OperationalError:
         pass
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise _database_connection_error() from exc
 
     admin_url = url.set(database="postgres")
 
@@ -43,10 +52,8 @@ def ensure_database_exists(database_url: str) -> None:
                     return
 
                 cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(database_name)))
-    except psycopg.OperationalError as exc:
-        raise RuntimeError(
-            "Databasega ulanib bo'lmadi. DATABASE_URL to'g'ri ekanini va database yaratilganini tekshiring."
-        ) from exc
+    except (psycopg.OperationalError, OSError, UnicodeError, ValueError) as exc:
+        raise _database_connection_error() from exc
 
 
 settings = get_settings()
