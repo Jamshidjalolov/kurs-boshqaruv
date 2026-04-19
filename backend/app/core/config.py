@@ -19,6 +19,11 @@ def _normalize_database_url(value: str) -> str:
     if not raw:
         raw = "postgresql+psycopg://postgres@localhost:5432/"
 
+    if raw.startswith("postgresql://"):
+        raw = raw.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif raw.startswith("postgres://"):
+        raw = raw.replace("postgres://", "postgresql+psycopg://", 1)
+
     parsed = urlparse(raw)
     path = parsed.path.lstrip("/")
 
