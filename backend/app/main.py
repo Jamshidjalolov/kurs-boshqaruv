@@ -14,6 +14,17 @@ from .services.telegram_bot import telegram_polling_loop
 settings = get_settings()
 
 
+def _cors_origins() -> list[str]:
+    configured = [
+        origin.strip()
+        for origin in settings.cors_origin.split(",")
+        if origin.strip()
+    ]
+    local_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+    return list(dict.fromkeys([*configured, *local_origins]))
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     initialize_database()
@@ -30,7 +41,7 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.cors_origin, "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

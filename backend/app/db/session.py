@@ -26,16 +26,27 @@ def ensure_database_exists(database_url: str) -> None:
     if not database_name:
         return
 
+    try:
+        with psycopg.connect(_as_psycopg_dsn(url.render_as_string(hide_password=False))):
+            return
+    except psycopg.OperationalError:
+        pass
+
     admin_url = url.set(database="postgres")
 
-    with psycopg.connect(_as_psycopg_dsn(admin_url.render_as_string(hide_password=False)), autocommit=True) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database_name,))
+    try:
+        with psycopg.connect(_as_psycopg_dsn(admin_url.render_as_string(hide_password=False)), autocommit=True) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database_name,))
 
-            if cursor.fetchone():
-                return
+                if cursor.fetchone():
+                    return
 
-            cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(database_name)))
+                cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(database_name)))
+    except psycopg.OperationalError as exc:
+        raise RuntimeError(
+            "Databasega ulanib bo'lmadi. DATABASE_URL to'g'ri ekanini va database yaratilganini tekshiring."
+        ) from exc
 
 
 settings = get_settings()

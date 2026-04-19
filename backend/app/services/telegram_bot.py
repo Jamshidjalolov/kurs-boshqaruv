@@ -13,12 +13,12 @@ from urllib.request import Request, urlopen
 from uuid import uuid4
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..core.config import BASE_DIR
 from ..core.security import decrypt_secret, encrypt_secret
 from ..db.session import SessionLocal
-from ..models import Notification, NotificationStatus, ParentTelegramStatus, PaymentStatus, Student, SystemMessage, TelegramBotSettings
+from ..models import Group, Notification, NotificationStatus, ParentTelegramStatus, PaymentStatus, Student, SystemMessage, TelegramBotSettings
 from .common import attendance_percent_for_student, money_to_text, payment_remaining_amount, payment_status_note_for_values
 from .live_events import live_events
 
@@ -155,6 +155,9 @@ PARENT_BUTTON_TO_ACTION = {
 PARENT_MENU_COMMANDS = {"/menu", "menu", "/panel", "panel", "/start"}
 CALLBACK_LOCK_TTL_SECONDS = 3.0
 CALLBACK_LOCKS: dict[str, float] = {}
+TELEGRAM_SEND_TIMEOUT_SECONDS = 10
+TELEGRAM_POLL_TIMEOUT_SECONDS = 20
+TELEGRAM_POLL_IDLE_SLEEP_SECONDS = 0.2
 
 PREMIUM_WELCOME_TEXT = (
     "\u2728 Assalomu alaykum, {parent}!\n\n"
@@ -338,7 +341,7 @@ def _build_parent_inline_keyboard_with_state(
         "keyboard": [
             [
                 {
-                    "text": "Yuklanmoqda..." if action == loading_action else text,
+                    "text": text,
                 }
                 for text, action in row
             ]
@@ -359,7 +362,7 @@ def _build_parent_inline_keyboard_with_state(
         "keyboard": [
             [
                 {
-                    "text": "\u23F3 Yuklanmoqda..." if action == loading_action else text,
+                    "text": text,
                 }
                 for text, action in row
             ]
@@ -392,11 +395,31 @@ def _unlock_callback(key: str) -> None:
     CALLBACK_LOCKS.pop(key, None)
 
 
+def _student_load_options() -> tuple[object, ...]:
+    return (
+        selectinload(Student.group).selectinload(Group.teacher),
+        selectinload(Student.course),
+        selectinload(Student.attendances),
+        selectinload(Student.payments),
+        selectinload(Student.homework_items),
+    )
+
+
 def _find_student_by_chat_id(db: Session, chat_id: str) -> Student | None:
-    return db.scalar(select(Student).where(Student.parent_telegram_chat_id == chat_id))
+    return db.scalar(
+        select(Student)
+        .options(*_student_load_options())
+        .where(Student.parent_telegram_chat_id == chat_id)
+    )
 
 
-def _telegram_request(token: str, method: str, payload: dict[str, object]) -> dict[str, Any]:
+def _telegram_request(
+    token: str,
+    method: str,
+    payload: dict[str, object],
+    *,
+    timeout: float = TELEGRAM_SEND_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
     request = Request(
         url=f"https://api.telegram.org/bot{token}/{method}",
         data=urlencode({key: json.dumps(value) if isinstance(value, (dict, list)) else str(value) for key, value in payload.items()}).encode("utf-8"),
@@ -404,7 +427,7 @@ def _telegram_request(token: str, method: str, payload: dict[str, object]) -> di
         method="POST",
     )
 
-    with urlopen(request, timeout=25) as response:  # noqa: S310
+    with urlopen(request, timeout=timeout) as response:  # noqa: S310
         data = json.loads(response.read().decode("utf-8"))
 
     if not data.get("ok"):
@@ -422,6 +445,7 @@ def _multipart_request(
     filename: str,
     file_content: bytes,
     content_type: str,
+    timeout: float = TELEGRAM_SEND_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     boundary = f"----kursboshqaruv{uuid4().hex}"
     body = bytearray()
@@ -447,7 +471,7 @@ def _multipart_request(
         method="POST",
     )
 
-    with urlopen(request, timeout=25) as response:  # noqa: S310
+    with urlopen(request, timeout=timeout) as response:  # noqa: S310
         data = json.loads(response.read().decode("utf-8"))
 
     if not data.get("ok"):
@@ -1005,7 +1029,6 @@ def _handle_parent_callback(token: str, settings: TelegramBotSettings, student: 
         settings,
         student,
         builder(student),
-        image_source=_resolved_image(settings.notification_image_url, default=DEFAULT_NOTIFICATION_IMAGE),
     )
 
 
@@ -1110,17 +1133,22 @@ def send_welcome_message(db: Session, student: Student) -> None:
         return
 
 
-def sync_telegram_updates(db: Session) -> dict[str, int]:
+def sync_telegram_updates(db: Session, *, timeout_seconds: int = 0) -> dict[str, int]:
     settings = get_or_create_telegram_settings(db)
     if not settings.enabled or not settings.bot_token_cipher:
         raise ValueError("Telegram bot hali sozlanmagan.")
 
     token = decrypt_secret(settings.bot_token_cipher)
-    payload: dict[str, object] = {"timeout": 0, "allowed_updates": ["message", "callback_query"]}
+    payload: dict[str, object] = {"timeout": timeout_seconds, "allowed_updates": ["message", "callback_query"]}
     if settings.last_update_id:
         payload["offset"] = settings.last_update_id
 
-    response = _telegram_request(token, "getUpdates", payload)
+    response = _telegram_request(
+        token,
+        "getUpdates",
+        payload,
+        timeout=max(TELEGRAM_SEND_TIMEOUT_SECONDS, timeout_seconds + 5),
+    )
     updates = response.get("result", [])
     connected = 0
 
@@ -1148,7 +1176,7 @@ def sync_telegram_updates(db: Session) -> dict[str, int]:
             if data.startswith("parent:"):
                 parts = data.split(":", 2)
                 if len(parts) == 3:
-                    student = db.get(Student, parts[2])
+                    student = db.get(Student, parts[2], options=_student_load_options())
 
             if student is None:
                 student = _find_student_by_chat_id(db, chat_id)
@@ -1230,13 +1258,6 @@ def sync_telegram_updates(db: Session) -> dict[str, int]:
 
             _lock_callback(lock_key)
             try:
-                _send_parent_panel_message(
-                    token,
-                    settings,
-                    student,
-                    "Yuklanmoqda...",
-                    loading_action=action,
-                )
                 _handle_parent_callback(token, settings, student, action)
             except Exception:
                 try:
@@ -1257,7 +1278,7 @@ def sync_telegram_updates(db: Session) -> dict[str, int]:
         if not payload_value.startswith("parent_"):
             continue
 
-        student = db.get(Student, payload_value.removeprefix("parent_"))
+        student = db.get(Student, payload_value.removeprefix("parent_"), options=_student_load_options())
         if not student:
             continue
 
@@ -1290,11 +1311,11 @@ async def telegram_polling_loop() -> None:
         except Exception:
             pass
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(TELEGRAM_POLL_IDLE_SLEEP_SECONDS)
 
 
 def _sync_telegram_updates_in_thread() -> None:
     with SessionLocal() as db:
         settings = get_or_create_telegram_settings(db)
         if settings.enabled and settings.bot_token_cipher:
-            sync_telegram_updates(db)
+            sync_telegram_updates(db, timeout_seconds=TELEGRAM_POLL_TIMEOUT_SECONDS)
