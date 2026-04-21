@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -46,6 +47,15 @@ from .telegram_bot import send_student_notification
 
 def _publish_live(*scopes: str) -> None:
     live_events.publish(list(scopes))
+
+
+def _today() -> date:
+    return datetime.now(ZoneInfo("Asia/Tashkent")).date()
+
+
+def _ensure_today(session_date: date, action: str) -> None:
+    if session_date != _today():
+        raise ValueError(f"{action} faqat o'sha kuni mumkin.")
 
 
 def append_system_message(db: Session, student: Student, title: str, body: str) -> None:
@@ -467,8 +477,7 @@ def mark_group_attendance(db: Session, current_user: User, payload: dict[str, ob
         raise ValueError("Guruh topilmadi.")
 
     session_date = date.fromisoformat(str(payload["date"]))
-    if db.scalar(select(Attendance.id).where(Attendance.group_id == group.id, Attendance.session_date == session_date)):
-        raise ValueError("Bu guruh uchun shu kunda davomat allaqachon olingan. Uni qayta o'zgartirib bo'lmaydi.")
+    _ensure_today(session_date, "Davomatni tahrirlash")
 
     lesson_topic = str(payload.get("lessonTopic") or "").strip() or None
     homework_title = str(payload.get("homeworkTitle") or "").strip() or None
@@ -483,9 +492,29 @@ def mark_group_attendance(db: Session, current_user: User, payload: dict[str, ob
 
         status_value = str(entry["status"])
         comment = str(entry.get("comment") or "").strip() or default_attendance_comment(status_value)
+        attendance_entry = db.scalar(
+            select(Attendance).where(
+                Attendance.student_id == student.id,
+                Attendance.group_id == group.id,
+                Attendance.session_date == session_date,
+            )
+        )
 
-        db.add(
-            Attendance(
+        if attendance_entry:
+            previous_status = attendance_entry.status
+            attendance_entry.teacher_id = teacher_id
+            attendance_entry.lesson_topic = lesson_topic
+            attendance_entry.status = AttendanceStatus(status_value)
+            attendance_entry.comment = comment
+            if status_value == AttendanceStatus.ABSENT.value:
+                attendance_entry.homework_score = 0
+                attendance_entry.homework_comment = None
+                attendance_entry.daily_grade = None
+                attendance_entry.daily_grade_comment = None
+            elif previous_status == AttendanceStatus.ABSENT and attendance_entry.homework_score == 0:
+                attendance_entry.homework_score = None
+        else:
+            attendance_entry = Attendance(
                 id=f"att-{uuid4().hex[:12]}",
                 student_id=student.id,
                 group_id=group.id,
@@ -496,7 +525,7 @@ def mark_group_attendance(db: Session, current_user: User, payload: dict[str, ob
                 comment=comment,
                 homework_score=0 if status_value == AttendanceStatus.ABSENT.value else None,
             )
-        )
+            db.add(attendance_entry)
 
         note_tag = attendance_note_tag(status_value)
         if note_tag:
@@ -511,24 +540,33 @@ def mark_group_attendance(db: Session, current_user: User, payload: dict[str, ob
                 )
             )
 
-        template = attendance_template(status_value) or "Davomat - Yangilandi"
-        _notify_student_auto(
-            db,
-            student,
-            template,
-            custom_text=_attendance_auto_text(student, group, session_date, status_value, lesson_topic, comment),
-        )
+        if entry.get("sendNotification"):
+            template = attendance_template(status_value) or "Davomat - Yangilandi"
+            _notify_student_auto(
+                db,
+                student,
+                template,
+                custom_text=_attendance_auto_text(student, group, session_date, status_value, lesson_topic, comment),
+            )
 
         if homework_title:
-            db.add(
-                HomeworkItem(
-                    id=f"hw-{uuid4().hex[:12]}",
-                    student_id=student.id,
-                    title=homework_title,
-                    due_date=homework_due_date,
-                    status="pending",
+            homework_exists = db.scalar(
+                select(HomeworkItem.id).where(
+                    HomeworkItem.student_id == student.id,
+                    HomeworkItem.title == homework_title,
+                    HomeworkItem.due_date == homework_due_date,
                 )
             )
+            if not homework_exists:
+                db.add(
+                    HomeworkItem(
+                        id=f"hw-{uuid4().hex[:12]}",
+                        student_id=student.id,
+                        title=homework_title,
+                        due_date=homework_due_date,
+                        status="pending",
+                    )
+                )
 
     db.commit()
     _publish_live("attendance", "students", "notifications", "student-detail", "teacher-student", "dashboard")
@@ -540,11 +578,14 @@ def save_attendance_topic(db: Session, payload: dict[str, str]) -> dict[str, obj
     if not group:
         raise ValueError("Guruh topilmadi.")
 
+    session_date = date.fromisoformat(payload["date"])
+    _ensure_today(session_date, "Dars mavzusini tahrirlash")
+
     lesson_topic = payload["lessonTopic"].strip()
     if not lesson_topic:
         raise ValueError("Dars mavzusini kiriting.")
 
-    rows = list(db.scalars(select(Attendance).where(Attendance.group_id == group.id, Attendance.session_date == date.fromisoformat(payload["date"]))).all())
+    rows = list(db.scalars(select(Attendance).where(Attendance.group_id == group.id, Attendance.session_date == session_date)).all())
     if not rows:
         raise ValueError("Avval shu sana uchun davomatni saqlang.")
 
@@ -564,6 +605,7 @@ def save_attendance_homework(db: Session, payload: dict[str, object]) -> dict[st
         raise ValueError("Saqlash uchun homework bahosi tanlanmagan.")
 
     session_date = date.fromisoformat(str(payload["date"]))
+    _ensure_today(session_date, "Uy vazifasi bahosini kiritish")
 
     for entry in payload["entries"]:
         student = db.get(Student, str(entry["studentId"]))
@@ -605,6 +647,7 @@ def save_attendance_daily_grade(db: Session, payload: dict[str, object]) -> dict
         raise ValueError("Saqlash uchun kunlik baho tanlanmagan.")
 
     session_date = date.fromisoformat(str(payload["date"]))
+    _ensure_today(session_date, "Kunlik bahoni kiritish")
 
     for entry in payload["entries"]:
         student = db.get(Student, str(entry["studentId"]))
