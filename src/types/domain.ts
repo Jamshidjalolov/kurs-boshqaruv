@@ -47,8 +47,8 @@ export interface StudentSummary {
   id: string;
   fullName: string;
   phone: string;
-  parentName: string;
-  parentPhone: string;
+  parentName?: string;
+  parentPhone?: string;
   parentTelegramStatus: "connected" | "missing";
   parentTelegramConnectUrl?: string | null;
   group: string;
@@ -177,7 +177,7 @@ export interface StudentDetail {
   id: string;
   fullName: string;
   phone: string;
-  parentName: string;
+  parentName?: string;
   parentPhone?: string;
   parentTelegramStatus: "connected" | "missing";
   parentTelegramHandle?: string;

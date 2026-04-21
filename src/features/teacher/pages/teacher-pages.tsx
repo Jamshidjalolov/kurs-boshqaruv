@@ -835,15 +835,6 @@ export function TeacherAttendancePage() {
               >
                 Orqaga
               </Button>
-              <Button
-                variant={isLocked ? "secondary" : "success"}
-                onClick={saveAttendance}
-                disabled={!selectedGroupId || !canEditSelectedDate || attendanceMutation.isPending || !selectedGroupStudents.length}
-                loading={attendanceMutation.isPending}
-              >
-                <CheckCheck size={16} className="mr-2" />
-                {attendanceMutation.isPending ? "Saqlanmoqda..." : isLocked ? "Tahrirni saqlash" : "Saqlash"}
-              </Button>
             </div>
           ) : (
             <Button
@@ -922,6 +913,18 @@ export function TeacherAttendancePage() {
                   className="field-control"
                 />
               </label>
+            </div>
+            <div className="mt-5 flex justify-end border-t border-border/70 pt-4">
+              <Button
+                className="w-full sm:w-auto"
+                variant={isLocked ? "primary" : "success"}
+                onClick={saveAttendance}
+                disabled={!selectedGroupId || !canEditSelectedDate || attendanceMutation.isPending || !selectedGroupStudents.length}
+                loading={attendanceMutation.isPending}
+              >
+                <CheckCheck size={16} className="mr-2" />
+                {attendanceMutation.isPending ? "Saqlanmoqda..." : isLocked ? "Tahrirlash" : "Saqlash"}
+              </Button>
             </div>
           </Card>
           {selectedGroupStudents.length ? (
@@ -1382,7 +1385,6 @@ export function TeacherStudentDetailPage() {
   }
 
   const openPayments = data.payments.filter((item) => item.status !== "paid").length;
-  const parentPhone = data.phone.replace(data.phone.slice(-2), "**");
 
   return (
     <section className="space-y-6">
@@ -1392,7 +1394,7 @@ export function TeacherStudentDetailPage() {
         actions={
           <Button onClick={() => setNotificationOpen(true)}>
             <Send size={16} className="mr-2" />
-            Ota-onaga xabar
+            Telegram xabar
           </Button>
         }
       />
@@ -1409,7 +1411,7 @@ export function TeacherStudentDetailPage() {
               <div className="mini-note">Telefon: {data.phone}</div>
               <div className="mini-note">Guruh: {data.group}</div>
               <div className="mini-note">Kurs: {data.course}</div>
-              <div className="mini-note">Ota-ona: {data.parentName}</div>
+              <div className="mini-note">Telegram: {data.parentTelegramStatus === "connected" ? "Ulangan" : "Ulanmagan"}</div>
             </div>
           </InfoPanel>
           <InfoPanel title="Davomat tarixi" description="So'nggi darslar bo'yicha holatlar.">
@@ -1462,10 +1464,8 @@ export function TeacherStudentDetailPage() {
             </div>
           </InfoPanel>
         </div>
-        <SidePanel title="Tezkor ko'rinish" description="Ota-ona, to'lov va vazifalar bo'yicha qisqa panel.">
+        <SidePanel title="Tezkor ko'rinish" description="To'lov va vazifalar bo'yicha qisqa panel.">
           <div className="space-y-3">
-            <div className="mini-note">Ota-ona: {data.parentName}</div>
-            <div className="mini-note">Aloqa: {parentPhone}</div>
             <div className="mini-note">Qarzdorlik: {openPayments} ta yozuv</div>
           </div>
           <TimelineList

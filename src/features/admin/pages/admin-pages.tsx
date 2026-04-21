@@ -540,8 +540,6 @@ export function AdminStudentsPage() {
   const [studentPhone, setStudentPhone] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
   const [studentPassword, setStudentPassword] = useState("");
-  const [studentParentName, setStudentParentName] = useState("");
-  const [studentParentPhone, setStudentParentPhone] = useState("");
   const [studentCourse, setStudentCourse] = useState("");
   const [studentTelegramHandle, setStudentTelegramHandle] = useState("");
   const [createdStudentAccount, setCreatedStudentAccount] = useState<(AccountCreateResponse & { studentId?: string }) | null>(null);
@@ -561,7 +559,7 @@ export function AdminStudentsPage() {
   const filtered = useMemo(
     () =>
       (data ?? []).filter((item) => {
-        const haystack = [item.fullName, item.group, item.course, item.parentName, item.parentPhone].join(" ").toLowerCase();
+        const haystack = [item.fullName, item.phone, item.group, item.course].join(" ").toLowerCase();
         return haystack.includes(search.toLowerCase()) && matchesStudentFilter(item, filter);
       }),
     [data, filter, search]
@@ -590,8 +588,6 @@ export function AdminStudentsPage() {
       setStudentPhone("");
       setStudentEmail("");
       setStudentPassword("");
-      setStudentParentName("");
-      setStudentParentPhone("");
       setStudentCourse("");
       setStudentTelegramHandle("");
       toast.success(response.message);
@@ -604,16 +600,14 @@ export function AdminStudentsPage() {
   const canCreateStudent = Boolean(
     studentFullName.trim() &&
       studentPhone.trim() &&
-      studentPassword.trim() &&
-      studentParentName.trim() &&
-      studentParentPhone.trim()
+      studentPassword.trim()
   );
 
   return (
     <section className="space-y-6">
       <PageHeader
         title="O'quvchilar boshqaruvi"
-        description="Qidirish, filtrlash va o'quvchi to'lovi, davomat hamda ota-ona aloqasini bir joyda ko'rish."
+        description="Qidirish, filtrlash va o'quvchi to'lovi, davomat hamda Telegram aloqasini bir joyda ko'rish."
         actions={
           <Button onClick={() => setIsStudentModalOpen(true)}>
             <Plus size={16} className="mr-2" />
@@ -660,7 +654,7 @@ export function AdminStudentsPage() {
         <SearchFilterBar
           value={search}
           onChange={setSearch}
-          placeholder="O'quvchi, guruh, kurs yoki ota-ona bo'yicha qidiring..."
+          placeholder="O'quvchi, telefon, guruh yoki kurs bo'yicha qidiring..."
           quickFilterLabel="Faqat qarzdorlar"
           onQuickFilter={() => setFilter("attention")}
         />
@@ -690,16 +684,6 @@ export function AdminStudentsPage() {
                 <div>{row.group}</div>
                 <div className="text-xs text-slate-500">{row.course}</div>
                 <div className="text-xs text-slate-400">{row.schedule ?? "Jadval biriktirilmagan"}</div>
-              </div>
-            )
-          },
-          {
-            key: "parent",
-            header: "Ota-ona",
-            render: (row) => (
-              <div>
-                <div>{row.parentName}</div>
-                <div className="text-xs text-slate-500">{row.parentPhone}</div>
               </div>
             )
           },
@@ -803,8 +787,6 @@ export function AdminStudentsPage() {
                   phone: studentPhone,
                   email: studentEmail || undefined,
                   password: studentPassword,
-                  parentName: studentParentName,
-                  parentPhone: studentParentPhone,
                   course: studentCourse || undefined,
                   parentTelegramHandle: studentTelegramHandle || undefined
                 })
@@ -832,14 +814,6 @@ export function AdminStudentsPage() {
             <label>
               <span className="field-label">Login paroli</span>
               <input value={studentPassword} onChange={(event) => setStudentPassword(event.target.value)} className="field-control" placeholder="Kamida 6 ta belgi" />
-            </label>
-            <label>
-              <span className="field-label">Ota-ona ismi</span>
-              <input value={studentParentName} onChange={(event) => setStudentParentName(event.target.value)} className="field-control" placeholder="Masalan: Nilufar Karimova" />
-            </label>
-            <label>
-              <span className="field-label">Ota-ona telefoni</span>
-              <input value={studentParentPhone} onChange={(event) => setStudentParentPhone(event.target.value)} className="field-control" placeholder="+99890..." />
             </label>
             <label>
               <span className="field-label">Kurs</span>
@@ -891,7 +865,6 @@ export function AdminStudentsPage() {
         <TelegramShareModal
           open={Boolean(selectedShareStudent)}
           studentName={selectedShareStudent.fullName}
-          parentName={selectedShareStudent.parentName}
           connectUrl={selectedShareStudent.parentTelegramConnectUrl}
           onClose={() => setSelectedShareStudent(null)}
         />
@@ -979,13 +952,11 @@ export function AdminStudentDetailPage() {
               <div className="mt-1 font-medium">{data.phone}</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Ota-ona</div>
-              <div className="mt-1 font-medium">{data.parentName}</div>
-              <div className="text-sm text-slate-500">{data.parentPhone}</div>
+              <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Telegram ulanish</div>
               <div className="mt-2">
                 <StatusBadge status={data.parentTelegramStatus} />
               </div>
-              {!canSendTelegram ? <div className="mt-2 text-sm text-amber-600 dark:text-amber-300">Avval ota-onani Telegram botga ulang.</div> : null}
+              {!canSendTelegram ? <div className="mt-2 text-sm text-amber-600 dark:text-amber-300">Avval Telegram botga ulang.</div> : null}
               {data.parentTelegramConnectUrl ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
@@ -2285,7 +2256,7 @@ export function AdminPaymentsPage() {
       setPaymentReceipt(response.receipt ?? null);
 
       if (response.notificationSent) {
-        toast.success("Ota-onaga to'lov bo'yicha xabar ham yuborildi.");
+        toast.success("Telegramga to'lov bo'yicha xabar ham yuborildi.");
       }
 
       setSendNotification(false);
@@ -2386,7 +2357,7 @@ export function AdminPaymentsPage() {
               {sendNotification ? "Xabar yuboriladi" : "Xabar yubormaslik"}
             </Button>
             <div className="text-sm text-slate-500">
-              {sendNotification ? "To'lovdan so'ng ota-onaga ham eslatma logi yoziladi." : "Kerak bo'lsa ota-onaga eslatma yuborishingiz mumkin."}
+              {sendNotification ? "To'lovdan so'ng Telegram eslatma logi yoziladi." : "Kerak bo'lsa Telegram eslatma yuborishingiz mumkin."}
             </div>
           </div>
           <Button

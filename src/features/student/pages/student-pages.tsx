@@ -595,8 +595,6 @@ export function StudentProfilePage() {
   const [fullName, setFullName] = useState(user.fullName);
   const [phone, setPhone] = useState(user.phone);
   const [email, setEmail] = useState(user.email ?? "");
-  const [parentName, setParentName] = useState("");
-  const [parentPhone, setParentPhone] = useState("");
   const [parentTelegramHandle, setParentTelegramHandle] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -610,8 +608,6 @@ export function StudentProfilePage() {
     setFullName(data.fullName);
     setPhone(data.phone);
     setEmail(user.email ?? "");
-    setParentName(data.parentName);
-    setParentPhone(data.parentPhone ?? "");
     setParentTelegramHandle(data.parentTelegramHandle ?? "");
   }, [data, user.email]);
 
@@ -663,7 +659,7 @@ export function StudentProfilePage() {
 
   return (
     <section className="space-y-6">
-      <SectionHeader title="Profil" description="Shaxsiy ma'lumotlar, ota-ona aloqasi va o'qish holati." />
+      <SectionHeader title="Profil" description="Shaxsiy ma'lumotlar, Telegram aloqasi va o'qish holati." />
       <div className="main-with-sidebar">
         <div className="space-y-6">
           <InfoPanel title={data.fullName} description="Shaxsiy ma'lumotlar va akkaunt sozlamalari shu yerda saqlanadi.">
@@ -701,14 +697,6 @@ export function StudentProfilePage() {
                     className="field-control"
                   />
                 </label>
-                <label>
-                  <span className="field-label">Ota-ona</span>
-                  <input value={parentName} onChange={(event) => setParentName(event.target.value)} className="field-control" />
-                </label>
-                <label>
-                  <span className="field-label">Ota-ona telefoni</span>
-                  <input value={parentPhone} onChange={(event) => setParentPhone(event.target.value)} className="field-control" />
-                </label>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -717,8 +705,6 @@ export function StudentProfilePage() {
                       fullName,
                       phone,
                       email: email || undefined,
-                      parentName,
-                      parentPhone,
                       parentTelegramHandle: parentTelegramHandle || undefined
                     })
                   }

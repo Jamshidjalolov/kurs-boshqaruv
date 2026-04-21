@@ -1299,8 +1299,6 @@ export const mockApi = {
     phone: string;
     email?: string;
     password: string;
-    parentName: string;
-    parentPhone: string;
     course?: string;
     parentTelegramHandle?: string;
   }): Promise<AccountCreateResponse & { studentId?: string }> {
@@ -1326,8 +1324,8 @@ export const mockApi = {
       id: nextStudentId,
       fullName: payload.fullName.trim(),
       phone: normalizedPhone,
-      parentName: payload.parentName.trim(),
-      parentPhone: payload.parentPhone.trim(),
+      parentName: "",
+      parentPhone: "",
       parentTelegramStatus: payload.parentTelegramHandle?.trim() ? "connected" : "missing",
       parentTelegramHandle: payload.parentTelegramHandle?.trim() || "",
       group: "Biriktirilmagan",

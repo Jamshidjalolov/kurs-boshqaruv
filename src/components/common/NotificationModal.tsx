@@ -102,7 +102,7 @@ export function NotificationModal({ open, studentId, studentName, onClose }: Not
       <Card className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:rounded-[30px]">
         <div className="border-b border-border/80 px-5 py-5 sm:px-6">
           <div className="section-kicker">Notification Center</div>
-          <h3 className="mt-3 font-display text-xl font-bold">Ota-onaga xabar yuborish</h3>
+          <h3 className="mt-3 font-display text-xl font-bold">Telegram xabar yuborish</h3>
           <p className="mt-1 max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
             {studentName} uchun kerakli xabarni tanlang. Keyin bir tugma bilan Telegram botga yuborasiz.
           </p>

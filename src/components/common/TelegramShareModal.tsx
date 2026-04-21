@@ -8,7 +8,6 @@ import { Button } from "./Button";
 interface TelegramShareModalProps {
   open: boolean;
   studentName: string;
-  parentName: string;
   connectUrl?: string | null;
   onClose: () => void;
 }
@@ -16,7 +15,6 @@ interface TelegramShareModalProps {
 export function TelegramShareModal({
   open,
   studentName,
-  parentName,
   connectUrl,
   onClose
 }: TelegramShareModalProps) {
@@ -61,7 +59,7 @@ export function TelegramShareModal({
       open={open}
       onClose={onClose}
       title={`${studentName} uchun Telegram ulash`}
-      description={`${parentName} uchun link yoki QR code yuboring. Ota-ona shu QR yoki link bilan botni ochib Start bosadi.`}
+      description="Link yoki QR code orqali Telegram botni ochib Start bosiladi."
       eyebrow="Telegram ulash"
       size="lg"
       footer={
@@ -109,7 +107,7 @@ export function TelegramShareModal({
             <div className="rounded-[28px] border border-border/80 bg-slate-50/90 p-5 dark:bg-slate-950/70">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Qadamlar</div>
               <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                <div>1. Ota-onaga QR code yoki linkni yuboring.</div>
+                <div>1. QR code yoki linkni Telegram foydalanuvchisiga yuboring.</div>
                 <div>2. U botni aynan shu link bilan ochsin.</div>
                 <div>3. Bot ichida `Start` bossin.</div>
                 <div>4. Shundan keyin student ro'yxatida holat avtomatik yangilanadi.</div>
