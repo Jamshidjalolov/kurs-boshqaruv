@@ -295,8 +295,8 @@ def create_student_account(db: Session, payload: dict[str, str | None]) -> dict[
     email = str(payload["email"]).strip().lower() if payload.get("email") else None
     password = str(payload["password"]).strip()
     full_name = str(payload["fullName"]).strip()
-    parent_name = str(payload["parentName"]).strip()
-    parent_phone = str(payload["parentPhone"]).strip()
+    parent_name = str(payload.get("parentName") or "").strip()
+    parent_phone = str(payload.get("parentPhone") or "").strip()
     course_title = str(payload.get("course") or "").strip() or None
     parent_telegram_handle = str(payload.get("parentTelegramHandle") or "").strip() or None
 
@@ -304,8 +304,6 @@ def create_student_account(db: Session, payload: dict[str, str | None]) -> dict[
         raise ValueError("O'quvchi ismini kiriting.")
     if not phone:
         raise ValueError("Telefon raqamini kiriting.")
-    if not parent_name or not parent_phone:
-        raise ValueError("Ota-ona ma'lumotlarini to'liq kiriting.")
     if len(password) < 6:
         raise ValueError("Parol kamida 6 ta belgidan iborat bo'lishi kerak.")
 
@@ -326,8 +324,8 @@ def create_student_account(db: Session, payload: dict[str, str | None]) -> dict[
         user_id=user.id,
         full_name=full_name,
         phone=phone,
-        parent_name=parent_name,
-        parent_phone=parent_phone,
+        parent_name=parent_name or "-",
+        parent_phone=parent_phone or "-",
         parent_telegram_status=ParentTelegramStatus.CONNECTED if parent_telegram_handle else ParentTelegramStatus.MISSING,
         parent_telegram_handle=parent_telegram_handle,
         course_id=course.id if course else None,
@@ -807,5 +805,5 @@ def send_notification_to_student(db: Session, student_id: str | None, student_na
     db.commit()
     _publish_live("notifications", "dashboard")
     if notification.status == NotificationStatus.FAILED:
-        raise ValueError("Telegramga yuborilmadi. Bot tokeni yoki ota-ona ulanishini tekshiring.")
+        raise ValueError("Telegramga yuborilmadi. Bot tokeni yoki foydalanuvchi ulanishini tekshiring.")
     return {"success": True}

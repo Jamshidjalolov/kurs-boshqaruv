@@ -27,8 +27,8 @@ class CreateStudentInput(BaseModel):
     phone: str
     email: str | None = None
     password: str
-    parentName: str
-    parentPhone: str
+    parentName: str | None = None
+    parentPhone: str | None = None
     course: str | None = None
     parentTelegramHandle: str | None = None
 

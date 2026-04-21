@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session, selectinload
 from ..core.config import BASE_DIR, get_settings
 from ..core.security import decrypt_secret, encrypt_secret
 from ..db.session import SessionLocal
-from ..models import Group, Notification, NotificationStatus, ParentTelegramStatus, PaymentStatus, Student, SystemMessage, TelegramBotSettings
+from ..models import Group, Notification, NotificationStatus, ParentTelegramStatus, PaymentStatus, Student, SystemMessage, TelegramBotSettings, User
 from .common import attendance_percent_for_student, money_to_text, payment_remaining_amount, payment_status_note_for_values
 from .live_events import live_events
 
@@ -160,14 +160,14 @@ TELEGRAM_POLL_TIMEOUT_SECONDS = 20
 TELEGRAM_POLL_IDLE_SLEEP_SECONDS = 0.2
 
 PREMIUM_WELCOME_TEXT = (
-    "\u2728 Assalomu alaykum, {parent}!\n\n"
-    "\U0001F393 {student} uchun ota-ona paneli tayyor.\n\n"
-    "\U0001F4DA Guruh: {group}\n"
-    "\U0001F9ED Kurs: {course}\n"
-    "\U0001F4C5 Jadval: {schedule}\n"
-    "\U0001F468 O'qituvchi: {teacher}\n"
-    "\U0001F6AA Xona: {room}\n\n"
-    "\u2B07\uFE0F Pastdagi tugmalar orqali jadval, vazifa, baho, to'lov va davomatni bir bosishda ochishingiz mumkin."
+    "Assalomu alaykum!\n\n"
+    "{student} uchun Telegram panel tayyor.\n\n"
+    "Guruh: {group}\n"
+    "Kurs: {course}\n"
+    "Jadval: {schedule}\n"
+    "O'qituvchi: {teacher}\n"
+    "Xona: {room}\n\n"
+    "Pastdagi tugmalar orqali jadval, vazifa, baho, to'lov va davomatni bir bosishda ochishingiz mumkin."
 )
 PREMIUM_ATTENDANCE_TEXT = (
     "\U0001F4CA Davomat yangilandi\n\n"
@@ -363,7 +363,7 @@ def render_template_message(
     room = student.group.room if student.group and student.group.room else "Biriktirilmagan"
     values: dict[str, str] = {
         "student": student.full_name,
-        "parent": student.parent_name,
+        "parent": student.parent_name if student.parent_name and student.parent_name != "-" else student.full_name,
         "group": group,
         "course": course,
         "schedule": schedule,
@@ -377,6 +377,38 @@ def render_template_message(
         values[key] = str(value)
 
     return template.format_map(SafeFormatDict(values))
+
+
+def _student_credentials_text(student: Student) -> str:
+    user = student.user
+    credential = user.account_credential if user else None
+    login_identifier = credential.login_identifier if credential else (user.email or user.phone if user else "")
+    password = ""
+
+    if credential and credential.password_cipher:
+        try:
+            password = decrypt_secret(credential.password_cipher)
+        except Exception:
+            password = ""
+
+    lines: list[str] = []
+    if login_identifier:
+        lines.append(f"Login: {login_identifier}")
+    if password:
+        lines.append(f"Parol: {password}")
+
+    if not lines:
+        return ""
+
+    return "Login ma'lumotlari:\n" + "\n".join(lines)
+
+
+def _append_student_credentials(text: str, student: Student) -> str:
+    credentials = _student_credentials_text(student)
+    if not credentials:
+        return text
+
+    return f"{text.rstrip()}\n\n{credentials}"
 
 
 def _build_parent_inline_keyboard(student: Student) -> dict[str, list[list[dict[str, str]]]]:
@@ -448,6 +480,7 @@ def _unlock_callback(key: str) -> None:
 
 def _student_load_options() -> tuple[object, ...]:
     return (
+        selectinload(Student.user).selectinload(User.account_credential),
         selectinload(Student.group).selectinload(Group.teacher),
         selectinload(Student.course),
         selectinload(Student.attendances),
@@ -1021,14 +1054,17 @@ def _build_overview_summary(student: Student) -> str:
     if latest_payment:
         payment_text = f"{latest_payment.month_label} | {_payment_status_emoji(latest_payment.status.value)} {_payment_status_text(latest_payment.status.value)}"
 
-    return (
-        "\u2728 Ota-ona paneli\n\n"
-        f"\U0001F464 O'quvchi: {student.full_name}\n"
-        f"\U0001F3EB Guruh: {student.group.name if student.group else 'Biriktirilmagan'}\n"
-        f"\u23F0 Jadval: {schedule}\n"
-        f"\U0001F4D8 So'nggi mavzu: {latest_topic}\n"
-        f"\U0001F4B3 To'lov: {payment_text}\n\n"
-        "\u2B07\uFE0F Pastdagi tugmalar orqali kerakli bo'limni ochishingiz mumkin."
+    return _append_student_credentials(
+        (
+            "Assalomu alaykum!\n\n"
+            f"O'quvchi: {student.full_name}\n"
+            f"Guruh: {student.group.name if student.group else 'Biriktirilmagan'}\n"
+            f"Jadval: {schedule}\n"
+            f"So'nggi mavzu: {latest_topic}\n"
+            f"To'lov: {payment_text}\n\n"
+            "Pastdagi tugmalar orqali kerakli bo'limni ochishingiz mumkin."
+        ),
+        student,
     )
 
 
@@ -1097,7 +1133,7 @@ def send_student_notification(
     if not settings.enabled or not _has_bot_token(settings):
         raise ValueError("Telegram bot hali sozlanmagan.")
     if not student.parent_telegram_chat_id:
-        raise ValueError("Ota-ona hali Telegram botga ulanmagan.")
+        raise ValueError("Telegram foydalanuvchisi hali botga ulanmagan.")
 
     token = _bot_token_for_settings(settings)
     if custom_text:
@@ -1111,6 +1147,7 @@ def send_student_notification(
     else:
         template = _resolved_text(settings.attendance_template, default=DEFAULT_ATTENDANCE_TEXT, legacy_values=(LEGACY_ATTENDANCE_TEXT, PREVIOUS_DEFAULT_ATTENDANCE_TEXT))
         text = render_template_message(template, student, template_name, extra_context=extra_context)
+    text = _append_student_credentials(text, student)
     status = NotificationStatus.SENT
 
     try:
@@ -1144,10 +1181,13 @@ def send_welcome_message(db: Session, student: Student) -> None:
         return
 
     token = _bot_token_for_settings(settings)
-    text = render_template_message(
-        _resolved_text(settings.welcome_text, default=DEFAULT_WELCOME_TEXT, legacy_values=(LEGACY_WELCOME_TEXT,)),
+    text = _append_student_credentials(
+        render_template_message(
+            _resolved_text(settings.welcome_text, default=DEFAULT_WELCOME_TEXT, legacy_values=(LEGACY_WELCOME_TEXT,)),
+            student,
+            "Ulanish tasdiqlandi",
+        ),
         student,
-        "Ulanish tasdiqlandi",
     )
     try:
         _send_parent_panel_message(
@@ -1167,10 +1207,13 @@ def send_welcome_message(db: Session, student: Student) -> None:
         return
 
     token = _bot_token_for_settings(settings)
-    text = render_template_message(
-        _resolved_text(settings.welcome_text, default=DEFAULT_WELCOME_TEXT, legacy_values=(LEGACY_WELCOME_TEXT, PREVIOUS_DEFAULT_WELCOME_TEXT)),
+    text = _append_student_credentials(
+        render_template_message(
+            _resolved_text(settings.welcome_text, default=DEFAULT_WELCOME_TEXT, legacy_values=(LEGACY_WELCOME_TEXT, PREVIOUS_DEFAULT_WELCOME_TEXT)),
+            student,
+            "Ulanish tasdiqlandi",
+        ),
         student,
-        "Ulanish tasdiqlandi",
     )
     try:
         _send_parent_panel_message(
@@ -1341,8 +1384,8 @@ def sync_telegram_updates(db: Session, *, timeout_seconds: int = 0) -> dict[str,
             SystemMessage(
                 id=f"msg-{uuid4().hex[:12]}",
                 student_id=student.id,
-                title="Telegram ota-ona ulanishi",
-                body="Ota-ona Telegram botga muvaffaqiyatli ulandi.",
+                title="Telegram ulanishi",
+                body="Telegram botga muvaffaqiyatli ulandi.",
                 created_at=datetime.now(),
             )
         )
