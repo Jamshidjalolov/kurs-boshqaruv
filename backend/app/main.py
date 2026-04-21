@@ -70,3 +70,8 @@ app.include_router(api_router, prefix=settings.api_prefix)
 @app.get("/")
 def root():
     return {"name": settings.app_name, "docs": "/docs"}
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    return {"status": "ok"}
