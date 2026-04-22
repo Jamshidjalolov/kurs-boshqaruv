@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import secrets
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -65,11 +64,12 @@ DEMO_ACCOUNTS = {
 }
 
 _demo_password_cache: str | None = None
+DEFAULT_DEMO_PASSWORD = "123456"
 
 
-def _configured_demo_password() -> str | None:
+def _configured_demo_password() -> str:
     configured = (get_settings().demo_user_password or "").strip()
-    return configured or None
+    return configured or DEFAULT_DEMO_PASSWORD
 
 
 def _get_demo_password() -> str:
@@ -80,12 +80,7 @@ def _get_demo_password() -> str:
 
     configured = _configured_demo_password()
 
-    if configured:
-        _demo_password_cache = configured
-        return _demo_password_cache
-
-    _demo_password_cache = secrets.token_urlsafe(12)
-    print(f"DEMO_USER_PASSWORD is not set. Generated a local-only demo password for this seed run: {_demo_password_cache}")
+    _demo_password_cache = configured
     return _demo_password_cache
 
 
