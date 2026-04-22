@@ -613,9 +613,6 @@ def save_attendance_homework(db: Session, payload: dict[str, object]) -> dict[st
         attendance_entry = db.scalar(select(Attendance).where(Attendance.student_id == student.id, Attendance.group_id == group.id, Attendance.session_date == session_date))
         if not attendance_entry:
             raise ValueError("Avval shu sana uchun davomatni saqlang.")
-        if attendance_entry.homework_score is not None:
-            raise ValueError(f"{student.full_name} uchun homework bahosi allaqachon qo'yilgan.")
-
         attendance_entry.homework_score = int(entry["homeworkScore"])
         attendance_entry.homework_comment = str(entry.get("homeworkComment") or "").strip() or None
         _notify_student_auto(
@@ -657,9 +654,6 @@ def save_attendance_daily_grade(db: Session, payload: dict[str, object]) -> dict
             raise ValueError("Avval shu sana uchun davomatni saqlang.")
         if attendance_entry.status == AttendanceStatus.ABSENT:
             raise ValueError(f"{student.full_name} kelmaganligi uchun kunlik baho qo'yib bo'lmaydi.")
-        if attendance_entry.daily_grade is not None:
-            raise ValueError(f"{student.full_name} uchun kunlik baho allaqachon qo'yilgan.")
-
         daily_grade = int(entry["dailyGrade"])
         if daily_grade < 1 or daily_grade > 5:
             raise ValueError("Kunlik baho 1 dan 5 gacha bo'lishi kerak.")
