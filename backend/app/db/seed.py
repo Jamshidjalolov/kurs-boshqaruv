@@ -43,7 +43,7 @@ DEMO_ACCOUNTS = {
     "admin": {
         "id": "admin-1",
         "full_name": "Admin Demo",
-        "email": "admin.demo@example.com",
+        "email": "jamshidjalolov6767@gmail.com",
         "phone": "+998900000101",
     },
     "teacher": {
@@ -64,7 +64,7 @@ DEMO_ACCOUNTS = {
 }
 
 _demo_password_cache: str | None = None
-DEFAULT_DEMO_PASSWORD = "123456"
+DEFAULT_DEMO_PASSWORD = "jamshid4884"
 
 
 def _configured_demo_password() -> str:
