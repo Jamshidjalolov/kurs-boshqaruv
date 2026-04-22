@@ -67,13 +67,18 @@ DEMO_ACCOUNTS = {
 _demo_password_cache: str | None = None
 
 
+def _configured_demo_password() -> str | None:
+    configured = (get_settings().demo_user_password or "").strip()
+    return configured or None
+
+
 def _get_demo_password() -> str:
     global _demo_password_cache
 
     if _demo_password_cache:
         return _demo_password_cache
 
-    configured = (get_settings().demo_user_password or "").strip()
+    configured = _configured_demo_password()
 
     if configured:
         _demo_password_cache = configured
@@ -86,6 +91,7 @@ def _get_demo_password() -> str:
 
 def ensure_demo_credentials(db: Session) -> None:
     demo_password = _get_demo_password()
+    configured_password = _configured_demo_password()
     defaults = [
         ("cred-admin-1", "admin-1", DEMO_ACCOUNTS["admin"]["email"], demo_password),
         ("cred-teacher-1", "teacher-1", DEMO_ACCOUNTS["teacher"]["email"], demo_password),
@@ -93,12 +99,18 @@ def ensure_demo_credentials(db: Session) -> None:
     ]
 
     for credential_id, user_id, login_identifier, password in defaults:
-        user_exists = db.scalar(select(User.id).where(User.id == user_id))
-        if not user_exists:
+        user = db.get(User, user_id)
+        if not user:
             continue
-        exists = db.scalar(select(AccountCredential.id).where(AccountCredential.user_id == user_id))
-        if exists:
+        credential = db.scalar(select(AccountCredential).where(AccountCredential.user_id == user_id))
+        if credential:
+            credential.login_identifier = login_identifier
+            if configured_password:
+                user.password_hash = hash_password(password)
+                credential.password_cipher = encrypt_secret(password)
             continue
+
+        user.password_hash = hash_password(password)
         db.add(
             AccountCredential(
                 id=credential_id,
