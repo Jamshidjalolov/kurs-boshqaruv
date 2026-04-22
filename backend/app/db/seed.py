@@ -89,9 +89,92 @@ def _get_demo_password() -> str:
     return _demo_password_cache
 
 
+def ensure_demo_users(db: Session, demo_password: str) -> None:
+    user_defaults = [
+        ("admin", Role.ADMIN),
+        ("teacher", Role.TEACHER),
+        ("student", Role.STUDENT),
+    ]
+
+    for account_key, role in user_defaults:
+        account = DEMO_ACCOUNTS[account_key]
+        user = db.get(User, account["id"])
+
+        if not user:
+            db.add(
+                User(
+                    id=account["id"],
+                    full_name=account["full_name"],
+                    email=account["email"],
+                    phone=account["phone"],
+                    password_hash=hash_password(demo_password),
+                    role=role,
+                    status=UserStatus.ACTIVE,
+                )
+            )
+            continue
+
+        user.full_name = account["full_name"]
+        user.email = account["email"]
+        user.phone = account["phone"]
+        user.role = role
+        user.status = UserStatus.ACTIVE
+
+    teacher_account = DEMO_ACCOUNTS["teacher"]
+    teacher = db.get(Teacher, teacher_account["id"])
+    if not teacher:
+        db.add(
+            Teacher(
+                id=teacher_account["id"],
+                user_id=teacher_account["id"],
+                full_name=teacher_account["full_name"],
+                phone=teacher_account["phone"],
+                email=teacher_account["email"],
+                specialization="IELTS / Umumiy ingliz tili",
+                status=TeacherStatus.ACTIVE,
+            )
+        )
+    elif teacher.user_id in (None, teacher_account["id"]):
+        teacher.user_id = teacher_account["id"]
+        teacher.full_name = teacher_account["full_name"]
+        teacher.phone = teacher_account["phone"]
+        teacher.email = teacher_account["email"]
+        teacher.status = TeacherStatus.ACTIVE
+
+    student_account = DEMO_ACCOUNTS["student"]
+    student = db.get(Student, student_account["id"])
+    if not student:
+        group_id = "group-1" if db.get(Group, "group-1") else None
+        course_id = "course-1" if db.get(Course, "course-1") else None
+        db.add(
+            Student(
+                id=student_account["id"],
+                user_id=student_account["id"],
+                full_name=student_account["full_name"],
+                phone=student_account["phone"],
+                parent_name=student_account["parent_name"],
+                parent_phone=student_account["parent_phone"],
+                parent_telegram_status=ParentTelegramStatus.CONNECTED,
+                parent_telegram_handle=student_account["parent_telegram_handle"],
+                group_id=group_id,
+                course_id=course_id,
+                monthly_fee=Decimal("850000"),
+            )
+        )
+    elif student.user_id in (None, student_account["id"]):
+        student.user_id = student_account["id"]
+        student.full_name = student_account["full_name"]
+        student.phone = student_account["phone"]
+        student.parent_name = student_account["parent_name"]
+        student.parent_phone = student_account["parent_phone"]
+        student.parent_telegram_status = ParentTelegramStatus.CONNECTED
+        student.parent_telegram_handle = student_account["parent_telegram_handle"]
+
+
 def ensure_demo_credentials(db: Session) -> None:
     demo_password = _get_demo_password()
     configured_password = _configured_demo_password()
+    ensure_demo_users(db, demo_password)
     defaults = [
         ("cred-admin-1", "admin-1", DEMO_ACCOUNTS["admin"]["email"], demo_password),
         ("cred-teacher-1", "teacher-1", DEMO_ACCOUNTS["teacher"]["email"], demo_password),
