@@ -551,6 +551,7 @@ const loginSchema = z.object({
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loginPending, setLoginPending] = useState(false);
   const navigate = useNavigate();
   const signIn = useAuthStore((state) => state.signIn);
   const {
@@ -565,6 +566,7 @@ export function LoginPage() {
       rememberMe: true
     }
   });
+  const isLoginBusy = isSubmitting || loginPending;
 
   return (
     <PublicShell>
@@ -585,6 +587,7 @@ export function LoginPage() {
             <form
               className="space-y-4"
               onSubmit={handleSubmit(async (values) => {
+                setLoginPending(true);
                 try {
                   const response = await authService.login({
                     identifier: values.identifier.trim(),
@@ -595,6 +598,7 @@ export function LoginPage() {
                   navigate(`/${response.user.role.toLowerCase()}/dashboard`);
                 } catch (error) {
                   toast.error(error instanceof Error ? error.message : "Kirishda xatolik yuz berdi.");
+                  setLoginPending(false);
                 }
               })}
             >
@@ -614,8 +618,16 @@ export function LoginPage() {
                 <input type="checkbox" className="h-4 w-4 rounded border-border text-primary focus:ring-primary" {...register("rememberMe")} />
                 Meni eslab qolish
               </label>
-              <Button className="w-full" size="lg" disabled={isSubmitting} loading={isSubmitting}>
-                {isSubmitting ? "Tekshirilmoqda..." : "Kirish"}
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={isLoginBusy}
+                loading={isLoginBusy}
+                loadingText="Tekshirilmoqda..."
+                lockOnClick={false}
+              >
+                Kirish
               </Button>
             </form>
             <div className="flex flex-col gap-2 text-sm sm:flex-row sm:justify-between">
