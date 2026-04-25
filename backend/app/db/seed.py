@@ -43,7 +43,7 @@ DEMO_ACCOUNTS = {
     "admin": {
         "id": "admin-1",
         "full_name": "Admin Demo",
-        "email": "jamshidjalolov6767@gmail.com",
+        "email": "jalolov6767@gmail.com",
         "phone": "+998900000101",
     },
     "teacher": {
