@@ -8,10 +8,13 @@ from ..models import *  # noqa: F403
 
 def apply_schema_updates() -> None:
     inspector = inspect(engine)
+    user_columns = {column["name"] for column in inspector.get_columns("users")} if inspector.has_table("users") else set()
     student_columns = {column["name"] for column in inspector.get_columns("students")} if inspector.has_table("students") else set()
     attendance_columns = {column["name"] for column in inspector.get_columns("attendances")} if inspector.has_table("attendances") else set()
 
     with engine.begin() as connection:
+        if "is_super_admin" not in user_columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN is_super_admin BOOLEAN DEFAULT FALSE NOT NULL"))
         if "parent_telegram_chat_id" not in student_columns:
             connection.execute(text("ALTER TABLE students ADD COLUMN parent_telegram_chat_id VARCHAR(80)"))
         if "daily_grade" not in attendance_columns:

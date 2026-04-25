@@ -7,7 +7,7 @@ from ...core.security import create_access_token, create_refresh_token, decode_t
 from ...db.session import get_db
 from ...models import User
 from ...schemas.auth import ChangePasswordInput, ForgotPasswordInput, LoginInput, RefreshInput, RegisterInput, ResetPasswordInput, UpdateOwnProfileInput, UploadAvatarInput
-from ...services.common import authenticate_user, change_current_user_password, create_registration, create_reset_token, reset_password, save_user_avatar, session_user_payload, update_current_user_profile
+from ...services.common import authenticate_user, change_current_user_password, create_registration, create_reset_token, reset_password, save_user_avatar, session_user_payload, update_current_user_profile, user_role_payload_value
 from ...services.live_events import live_events
 
 
@@ -21,7 +21,7 @@ def login(payload: LoginInput, request: Request, db: Session = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
-    access_token = create_access_token(user.id, user.role.value)
+    access_token = create_access_token(user.id, user_role_payload_value(user))
     refresh_token = create_refresh_token(user.id)
     user.refresh_token_hash = hash_token(refresh_token)
     db.commit()
@@ -39,7 +39,7 @@ def issue_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
-    access_token = create_access_token(user.id, user.role.value)
+    access_token = create_access_token(user.id, user_role_payload_value(user))
     refresh_token = create_refresh_token(user.id)
     user.refresh_token_hash = hash_token(refresh_token)
     db.commit()
@@ -66,7 +66,7 @@ def refresh(payload: RefreshInput, request: Request, db: Session = Depends(get_d
     if not user or not user.refresh_token_hash or user.refresh_token_hash != hash_token(payload.refreshToken):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-    access_token = create_access_token(user.id, user.role.value)
+    access_token = create_access_token(user.id, user_role_payload_value(user))
     refresh_token = create_refresh_token(user.id)
     user.refresh_token_hash = hash_token(refresh_token)
     db.commit()

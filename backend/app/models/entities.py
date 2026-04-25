@@ -62,6 +62,7 @@ class User(Base):
     phone: Mapped[str] = mapped_column(String(40), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(SqlEnum(Role, native_enum=False), nullable=False)
+    is_super_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[UserStatus] = mapped_column(SqlEnum(UserStatus, native_enum=False), default=UserStatus.ACTIVE, nullable=False)
     avatar: Mapped[str | None] = mapped_column(String(255))
     refresh_token_hash: Mapped[str | None] = mapped_column(String(255))

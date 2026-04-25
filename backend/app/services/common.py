@@ -164,6 +164,14 @@ def student_payment_status(student: Student) -> PaymentStatus:
     return PaymentStatus.PAID
 
 
+def is_super_admin(user: User) -> bool:
+    return bool(user.is_super_admin)
+
+
+def user_role_payload_value(user: User) -> str:
+    return "SUPER_ADMIN" if is_super_admin(user) else user.role.value
+
+
 def session_user_payload(user: User) -> dict[str, str | None]:
     profile_id = user.student_profile.id if user.student_profile else user.teacher_profile.id if user.teacher_profile else user.id
 
@@ -171,7 +179,7 @@ def session_user_payload(user: User) -> dict[str, str | None]:
         "id": user.id,
         "profileId": profile_id,
         "fullName": user.full_name,
-        "role": user.role.value,
+        "role": user_role_payload_value(user),
         "phone": user.phone,
         "email": user.email,
         "avatar": user.avatar,

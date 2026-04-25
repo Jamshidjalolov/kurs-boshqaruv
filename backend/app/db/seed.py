@@ -84,6 +84,20 @@ def _get_demo_password() -> str:
     return _demo_password_cache
 
 
+def _existing_user_id_for_email(db: Session, email: str, *, exclude_user_id: str | None = None) -> str | None:
+    statement = select(User.id).where(User.email == email)
+    if exclude_user_id is not None:
+        statement = statement.where(User.id != exclude_user_id)
+    return db.scalar(statement)
+
+
+def _resolved_demo_login_user(db: Session, default_user_id: str, login_identifier: str) -> User | None:
+    login_owner_id = _existing_user_id_for_email(db, login_identifier)
+    if login_owner_id:
+        return db.get(User, login_owner_id)
+    return db.get(User, default_user_id)
+
+
 def ensure_demo_users(db: Session, demo_password: str) -> None:
     user_defaults = [
         ("admin", Role.ADMIN),
@@ -110,7 +124,8 @@ def ensure_demo_users(db: Session, demo_password: str) -> None:
             continue
 
         user.full_name = account["full_name"]
-        user.email = account["email"]
+        if not _existing_user_id_for_email(db, account["email"], exclude_user_id=account["id"]):
+            user.email = account["email"]
         user.phone = account["phone"]
         user.role = role
         user.status = UserStatus.ACTIVE
@@ -177,10 +192,10 @@ def ensure_demo_credentials(db: Session) -> None:
     ]
 
     for credential_id, user_id, login_identifier, password in defaults:
-        user = db.get(User, user_id)
+        user = _resolved_demo_login_user(db, user_id, login_identifier)
         if not user:
             continue
-        credential = db.scalar(select(AccountCredential).where(AccountCredential.user_id == user_id))
+        credential = db.scalar(select(AccountCredential).where(AccountCredential.user_id == user.id))
         if credential:
             credential.login_identifier = login_identifier
             if configured_password:
@@ -191,8 +206,8 @@ def ensure_demo_credentials(db: Session) -> None:
         user.password_hash = hash_password(password)
         db.add(
             AccountCredential(
-                id=credential_id,
-                user_id=user_id,
+                id=credential_id if user.id == user_id else f"cred-{user.id}",
+                user_id=user.id,
                 login_identifier=login_identifier,
                 password_cipher=encrypt_secret(password),
             )
